@@ -1,7 +1,7 @@
 from setuptools import setup
 setup(
     name='pyteslaapi',
-    version='0.0.16',
+    version='0.0.28',
     packages=['pyteslaapi'],
     include_package_data=True,
     install_requires=[

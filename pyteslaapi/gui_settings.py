@@ -9,20 +9,20 @@ class GuiSettings:
 
     @property
     def distance_units(self):
-        return self.vehicle._gui_settings_data['gui_distance_units']
+        return self.vehicle._gui_settings_data.get('gui_distance_units')
 
     @property
     def temperature_units(self):
-        return self.vehicle._gui_settings_data['gui_temperature_units']
+        return self.vehicle._gui_settings_data.get('gui_temperature_units')
 
     @property
     def charge_rate_units(self):
-        return self.vehicle._gui_settings_data['gui_charge_rate_units']
+        return self.vehicle._gui_settings_data.get('gui_charge_rate_units')
 
     @property
     def gui_24_hour_time(self):
-        return self.vehicle._gui_settings_data['gui_24_hour_time']
+        return self.vehicle._gui_settings_data.get('gui_24_hour_time')
 
     @property
     def range_display(self):
-        return self.vehicle._gui_settings_data['gui_range_display']
+        return self.vehicle._gui_settings_data.get('gui_range_display')

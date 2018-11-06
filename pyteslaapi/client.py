@@ -3,8 +3,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-from vehicle import Vehicle
-from exceptions import TeslaException
+from pyteslaapi.vehicle import Vehicle
+from pyteslaapi.exceptions import TeslaException
+
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 TESLA_API_BASE_URL = 'https://owner-api.teslamotors.com/'
 TOKEN_URL = TESLA_API_BASE_URL + 'oauth/token'
@@ -14,11 +18,17 @@ OAUTH_CLIENT_ID = '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796
 OAUTH_CLIENT_SECRET = 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3'
 
 class TeslaApiClient:
-    def __init__(self, email, password):
+    def __init__(self, email, password, wake=False,
+                 update_interval=900,
+                 drive_interval=45,
+                 wake_interval=21800):
         self._email = email
         self._password = password
         self._token = None
-        self._vehicles = [Vehicle(self, vehicle) for vehicle in self.get('vehicles')]
+        self._vehicles = [Vehicle(self, vehicle, wake,
+                                  update_interval,
+                                  drive_interval,
+                                  wake_interval) for vehicle in self.get('vehicles')]
 
     def _get_new_token(self):
         request_data = {
@@ -73,32 +83,40 @@ class TeslaApiClient:
 
 
     def get(self, endpoint):
-        self.authenticate()
+        try:
+            self.authenticate()
 
-        response = self.__requests_retry_session().get(
-            '{}/{}'.format(API_URL, endpoint), headers=self._get_headers()
-        )
-        response_json = response.json()
+            response = self.__requests_retry_session().get(
+                '{}/{}'.format(API_URL, endpoint), headers=self._get_headers()
+            )
+            response_json = response.json()
 
-        if 'error' in response_json:
-            raise TeslaException(response.status_code, response_json['error'])
+            if 'error' in response_json:
+                raise TeslaException(response.status_code, response_json['error'])
 
-        return response_json['response']
+            return response_json['response']
+        except requests.exceptions.RetryError as e:
+            _LOGGER.debug(str(e))
+            return False
 
 
     def post(self, endpoint, data = {}):
-        self.authenticate()
+        try:
+            self.authenticate()
 
-        response = self.__requests_retry_session().post(
-            '{}/{}'.format(API_URL, endpoint), headers=self._get_headers(),
-            data=data
-        )
-        response_json = response.json()
+            response = self.__requests_retry_session().post(
+                '{}/{}'.format(API_URL, endpoint), headers=self._get_headers(),
+                data=data
+            )
+            response_json = response.json()
 
-        if 'error' in response_json:
-            raise TeslaException(response.status_code, response_json['error'])
+            if 'error' in response_json:
+                raise TeslaException(response.status_code, response_json['error'])
 
-        return response_json['response']
+            return response_json['response']
+        except requests.exceptions.RetryError as e:
+            _LOGGER.debug(str(e))
+            return False
 
     def __requests_retry_session(self,
         retries=5,
